@@ -1,0 +1,13 @@
+attached_assets/
+__pycache__/
+*.pyc
+.env
+node_modules/
+dist/
+.pythonlibs/
+eei-explorer.zip
+eei-explorer-unzipped/
+
+gee-key.json
+*-key.json
+.claude/

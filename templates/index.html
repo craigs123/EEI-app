@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EEI Explorer - Ecosystem Integrity Index Lookup</title>
+    <meta name="description" content="Look up Ecosystem Integrity Index (EEI) values for up to 10 locations on Earth. Enter coordinates to discover ecosystem health metrics.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #f0fdf4;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #ecfdf5;
+            --text-primary: #14532d;
+            --text-secondary: #166534;
+            --text-muted: #6b7280;
+            --accent: #16a34a;
+            --accent-hover: #15803d;
+            --accent-light: #bbf7d0;
+            --border: #d1fae5;
+            --error: #dc2626;
+            --error-bg: #fef2f2;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 12px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #dcfce7 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent) 0%, #22c55e 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-icon svg {
+            width: 28px;
+            height: 28px;
+            fill: white;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 32px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--accent);
+        }
+        
+        .coord-row {
+            display: grid;
+            grid-template-columns: auto 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+        
+        @media (max-width: 700px) {
+            .coord-row {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .coord-row .row-number {
+                grid-column: 1 / -1;
+            }
+            .coord-row .remove-btn {
+                grid-column: 1 / -1;
+                justify-self: end;
+            }
+        }
+        
+        .row-number {
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 0.9rem;
+            padding-bottom: 8px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        label {
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        input[type="number"] {
+            padding: 12px 14px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: var(--bg-secondary);
+            width: 100%;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, #22c55e 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(22, 163, 74, 0.25);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.35);
+        }
+        
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 2px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--accent-light);
+            border-color: var(--accent);
+        }
+        
+        .btn-danger {
+            background: transparent;
+            color: var(--error);
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+        
+        .btn-danger:hover {
+            background: var(--error-bg);
+        }
+        
+        .btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .results {
+            display: none;
+        }
+        
+        .results.visible {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .demo-badge {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .averages-section {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 2px solid var(--accent-light);
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .averages-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        .averages-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        
+        @media (max-width: 700px) {
+            .averages-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .avg-card {
+            text-align: center;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+        }
+        
+        .avg-card.main {
+            grid-column: 1 / -1;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .avg-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        
+        .avg-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .avg-card.main .avg-value {
+            font-size: 3rem;
+            background: linear-gradient(135deg, var(--accent) 0%, #22c55e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .individual-results {
+            margin-top: 24px;
+        }
+        
+        .individual-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+        
+        .result-item {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .result-location {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .result-location svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--accent);
+        }
+        
+        .result-eii {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .result-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        @media (max-width: 600px) {
+            .result-metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .result-metric {
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 6px;
+        }
+        
+        .result-metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        
+        .result-metric-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .metric-bar {
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        
+        .metric-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent) 0%, #22c55e 100%);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+        }
+        
+        .error-message {
+            background: var(--error-bg);
+            border: 1px solid #fecaca;
+            color: var(--error);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        
+        .error-message.visible {
+            display: block;
+        }
+        
+        .info-section {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-top: 24px;
+            border: 1px solid var(--border);
+        }
+        
+        .info-section h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+        
+        .info-section p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        
+        .info-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .info-section li {
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .info-section li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 14px;
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .coord-count {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                </div>
+            </div>
+            <h1>EEI Explorer</h1>
+            <p class="subtitle">Discover Ecosystem Integrity Index values for up to 10 locations on Earth</p>
+        </header>
+
+        <div class="card">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px;">
+                <h2 class="card-title" style="margin-bottom: 0;">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    Enter Coordinates
+                </h2>
+                <span class="coord-count" id="coord-count">1 of 10 locations</span>
+            </div>
+            
+            <div id="error-message" class="error-message"></div>
+            
+            <form id="eei-form">
+                <div id="coordinates-container">
+                    <div class="coord-row" data-index="0">
+                        <span class="row-number">#1</span>
+                        <div class="form-group">
+                            <label>Latitude</label>
+                            <input type="number" name="latitude" placeholder="-90 to 90" step="any" min="-90" max="90" required data-testid="input-latitude-0">
+                        </div>
+                        <div class="form-group">
+                            <label>Longitude</label>
+                            <input type="number" name="longitude" placeholder="-180 to 180" step="any" min="-180" max="180" required data-testid="input-longitude-0">
+                        </div>
+                        <div></div>
+                    </div>
+                </div>
+                
+                <div class="button-row">
+                    <button type="button" class="btn btn-secondary" id="add-coord-btn" data-testid="button-add-location">
+                        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        Add Location
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submit-btn" data-testid="button-submit">
+                        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                        Get EEI Data
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div id="results" class="results card">
+            <div class="results-header">
+                <h2 class="card-title" style="margin-bottom: 0;">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                    Results
+                </h2>
+                <span id="demo-badge" class="demo-badge" style="display: none;">Demo Mode</span>
+            </div>
+            
+            <div id="results-content"></div>
+        </div>
+
+        <div class="info-section">
+            <h3>About the Ecosystem Integrity Index (EEI)</h3>
+            <p>The EEI is a composite metric measuring ecosystem health on a scale of 0 (degraded) to 1 (pristine). It combines three key components:</p>
+            <ul>
+                <li><strong>Functional Integrity</strong> - Net Primary Productivity compared to natural baseline</li>
+                <li><strong>Structural Integrity</strong> - Landscape connectivity and human modification</li>
+                <li><strong>Compositional Integrity</strong> - Biodiversity Intactness Index (BII)</li>
+            </ul>
+            <p>Data source: <a href="https://landler-io.github.io/ecosystem-integrity-index/" target="_blank">Landler Open Data</a> via Google Earth Engine.</p>
+        </div>
+
+        <footer>
+            <p>Powered by <a href="https://landler-io.github.io/ecosystem-integrity-index/api/" target="_blank">Ecosystem Integrity Index API</a></p>
+        </footer>
+    </div>
+
+    <script>
+        const form = document.getElementById('eei-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const addCoordBtn = document.getElementById('add-coord-btn');
+        const coordsContainer = document.getElementById('coordinates-container');
+        const coordCount = document.getElementById('coord-count');
+        const resultsDiv = document.getElementById('results');
+        const resultsContent = document.getElementById('results-content');
+        const demoBadge = document.getElementById('demo-badge');
+        const errorMessage = document.getElementById('error-message');
+        
+        let coordIndex = 1;
+        
+        function updateCoordCount() {
+            const count = coordsContainer.querySelectorAll('.coord-row').length;
+            coordCount.textContent = `${count} of 10 locations`;
+            addCoordBtn.disabled = count >= 10;
+            if (count >= 10) {
+                addCoordBtn.style.opacity = '0.5';
+            } else {
+                addCoordBtn.style.opacity = '1';
+            }
+        }
+        
+        function createCoordRow(index) {
+            const row = document.createElement('div');
+            row.className = 'coord-row';
+            row.dataset.index = index;
+            row.innerHTML = `
+                <span class="row-number">#${index + 1}</span>
+                <div class="form-group">
+                    <label>Latitude</label>
+                    <input type="number" name="latitude" placeholder="-90 to 90" step="any" min="-90" max="90" required data-testid="input-latitude-${index}">
+                </div>
+                <div class="form-group">
+                    <label>Longitude</label>
+                    <input type="number" name="longitude" placeholder="-180 to 180" step="any" min="-180" max="180" required data-testid="input-longitude-${index}">
+                </div>
+                <button type="button" class="btn btn-danger remove-btn" data-testid="button-remove-${index}">Remove</button>
+            `;
+            
+            row.querySelector('.remove-btn').addEventListener('click', () => {
+                row.remove();
+                renumberRows();
+                updateCoordCount();
+            });
+            
+            return row;
+        }
+        
+        function renumberRows() {
+            const rows = coordsContainer.querySelectorAll('.coord-row');
+            rows.forEach((row, i) => {
+                row.querySelector('.row-number').textContent = `#${i + 1}`;
+            });
+        }
+        
+        addCoordBtn.addEventListener('click', () => {
+            if (coordsContainer.querySelectorAll('.coord-row').length >= 10) return;
+            const row = createCoordRow(coordIndex++);
+            coordsContainer.appendChild(row);
+            updateCoordCount();
+            row.querySelector('input[name="latitude"]').focus();
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Collect all coordinates
+            const rows = coordsContainer.querySelectorAll('.coord-row');
+            const coordinates = [];
+            
+            rows.forEach(row => {
+                const lat = parseFloat(row.querySelector('input[name="latitude"]').value);
+                const lon = parseFloat(row.querySelector('input[name="longitude"]').value);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    coordinates.push({ latitude: lat, longitude: lon });
+                }
+            });
+            
+            if (coordinates.length === 0) {
+                errorMessage.textContent = 'Please enter at least one valid coordinate pair.';
+                errorMessage.classList.add('visible');
+                return;
+            }
+            
+            // Hide previous results/errors
+            resultsDiv.classList.remove('visible');
+            errorMessage.classList.remove('visible');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="spinner"></div><span>Loading...</span>';
+            
+            try {
+                const response = await fetch('/api/eei-batch', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ coordinates }),
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Failed to fetch EEI data');
+                }
+                
+                displayResults(data);
+                
+            } catch (error) {
+                errorMessage.textContent = error.message;
+                errorMessage.classList.add('visible');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><span>Get EEI Data</span>';
+            }
+        });
+
+        function displayResults(data) {
+            // Show demo badge if in demo mode
+            demoBadge.style.display = data.demo_mode ? 'inline-block' : 'none';
+            
+            const averages = data.averages;
+            const results = data.results;
+            
+            let html = '';
+            
+            // Averages section (only if we have valid data)
+            if (data.valid_count > 0) {
+                html += `
+                    <div class="averages-section">
+                        <div class="averages-title">Average EEI Across ${data.valid_count} Location${data.valid_count > 1 ? 's' : ''}</div>
+                        <div class="averages-grid">
+                            <div class="avg-card main" data-testid="avg-eii">
+                                <div class="avg-label">Overall EEI</div>
+                                <div class="avg-value">${formatValue(averages.eii)}</div>
+                                <div class="metric-bar">
+                                    <div class="metric-bar-fill" style="width: ${averages.eii ? (averages.eii * 100).toFixed(1) : 0}%"></div>
+                                </div>
+                            </div>
+                            <div class="avg-card" data-testid="avg-functional">
+                                <div class="avg-label">Functional</div>
+                                <div class="avg-value">${formatValue(averages.functional_integrity)}</div>
+                            </div>
+                            <div class="avg-card" data-testid="avg-structural">
+                                <div class="avg-label">Structural</div>
+                                <div class="avg-value">${formatValue(averages.structural_integrity)}</div>
+                            </div>
+                            <div class="avg-card" data-testid="avg-compositional">
+                                <div class="avg-label">Compositional</div>
+                                <div class="avg-value">${formatValue(averages.compositional_integrity)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Individual results
+            html += `<div class="individual-results">
+                <div class="individual-title">Individual Location Results</div>`;
+            
+            results.forEach((result, i) => {
+                const coords = result.coordinates || {};
+                const values = result.values || {};
+                
+                if (result.error) {
+                    html += `
+                        <div class="result-item" data-testid="result-${i}">
+                            <div class="result-header">
+                                <div class="result-location">
+                                    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                                    #${i + 1}: ${coords.latitude?.toFixed(4) || '?'}, ${coords.longitude?.toFixed(4) || '?'}
+                                </div>
+                            </div>
+                            <div class="no-data">Error: ${result.error}</div>
+                        </div>
+                    `;
+                } else if (values.eii === null || values.eii === undefined) {
+                    html += `
+                        <div class="result-item" data-testid="result-${i}">
+                            <div class="result-header">
+                                <div class="result-location">
+                                    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                                    #${i + 1}: ${coords.latitude?.toFixed(4)}, ${coords.longitude?.toFixed(4)}
+                                </div>
+                            </div>
+                            <div class="no-data">${result.message || 'No data available for this location'}</div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="result-item" data-testid="result-${i}">
+                            <div class="result-header">
+                                <div class="result-location">
+                                    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                                    #${i + 1}: ${coords.latitude?.toFixed(4)}, ${coords.longitude?.toFixed(4)}
+                                </div>
+                                <div class="result-eii" data-testid="result-eii-${i}">${formatValue(values.eii)}</div>
+                            </div>
+                            <div class="result-metrics">
+                                <div class="result-metric">
+                                    <div class="result-metric-label">Functional</div>
+                                    <div class="result-metric-value">${formatValue(values.functional_integrity)}</div>
+                                </div>
+                                <div class="result-metric">
+                                    <div class="result-metric-label">Structural</div>
+                                    <div class="result-metric-value">${formatValue(values.structural_integrity)}</div>
+                                </div>
+                                <div class="result-metric">
+                                    <div class="result-metric-label">Compositional</div>
+                                    <div class="result-metric-value">${formatValue(values.compositional_integrity)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '</div>';
+            
+            resultsContent.innerHTML = html;
+            resultsDiv.classList.add('visible');
+        }
+
+        function formatValue(val) {
+            if (val === null || val === undefined) return 'N/A';
+            return val.toFixed(3);
+        }
+    </script>
+</body>
+</html>

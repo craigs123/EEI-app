@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: eei-explorer
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: GEE_SERVICE_ACCOUNT_KEY
+        sync: false
+      - key: GEE_PROJECT_ID
+        sync: false

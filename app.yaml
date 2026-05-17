@@ -1,0 +1,10 @@
+runtime: python311
+
+entrypoint: gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+
+env_variables:
+  GEE_PROJECT_ID: "eve-solutions-482317"
+  # The GEE service account key is stored in Secret Manager, not in this file,
+  # so app.yaml is safe to commit. The runtime fetches the secret named below
+  # at startup (see initialize_ee in main.py).
+  GEE_SECRET_ID: "gee-service-account-key"
